@@ -8,7 +8,7 @@
 
 	const dispatch = createEventDispatcher();
 
-	let parlayStake = 25;
+	let parlayStake = null; // No default value
 	let parlayPot = 0;
 	let isPlacing = false;
 	let totalParlayBets = 0;
@@ -74,9 +74,17 @@
 	}
 
 	async function placeParlayBet() {
-		if (!user || !isValidParlay || parlayStake <= 0 || parlayStake > userCoins) {
+		if (!user || !isValidParlay || !parlayStake || parlayStake <= 0 || parlayStake > userCoins) {
+			if (!parlayStake || parlayStake <= 0) {
+				alert('Please enter a parlay stake amount!');
+				return;
+			}
 			return;
 		}
+
+		// Check parlay limits
+		const canPlaceParlay = await checkParlayLimits();
+		if (!canPlaceParlay) return;
 
 		isPlacing = true;
 
@@ -113,7 +121,7 @@
 
 			// Clear parlay slip and notify parent
 			selectedLegs = [];
-			parlayStake = 25;
+			parlayStake = null;
 			dispatch('parlayPlaced');
 
 		} catch (error) {
@@ -122,6 +130,22 @@
 		} finally {
 			isPlacing = false;
 		}
+	}
+
+	async function checkParlayLimits() {
+		// Check how many active parlays user has
+		const { count } = await supabase
+			.from('parlay_bets')
+			.select('*', { count: 'exact', head: true })
+			.eq('user_id', user.id)
+			.eq('status', 'pending');
+
+		if (count >= 3) {
+			alert('Maximum 3 active parlays reached!');
+			return false;
+		}
+
+		return true;
 	}
 
 	async function getUserBetCount() {
@@ -165,6 +189,7 @@
 				id="parlayStake"
 				type="number" 
 				bind:value={parlayStake}
+				placeholder="Enter stake"
 				min="1"
 				max={userCoins}
 				step="1"
@@ -191,9 +216,9 @@
 
 		<button 
 			on:click={placeParlayBet}
-			disabled={isPlacing || !isValidParlay || parlayStake <= 0 || parlayStake > userCoins}
+			disabled={isPlacing || !isValidParlay || !parlayStake || parlayStake <= 0 || parlayStake > userCoins}
 			class="place-parlay-btn"
-			class:valid={isValidParlay}
+			class:valid={isValidParlay && parlayStake > 0}
 		>
 			{#if isPlacing}
 				Placing Parlay...

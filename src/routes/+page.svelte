@@ -89,6 +89,10 @@
 			return;
 		}
 
+		// Check betting limits
+		const canBet = await checkSingleBetLimits(marketId, side);
+		if (!canBet) return;
+
 		try {
 			// Place the bet
 			const { error: betError } = await supabase
@@ -134,6 +138,40 @@
 		}
 	}
 
+	async function checkSingleBetLimits(marketId, side) {
+		// Check how many bets user has on this specific market + side
+		const { count } = await supabase
+			.from('single_bets')
+			.select('*', { count: 'exact', head: true })
+			.eq('user_id', user.id)
+			.eq('market_id', marketId)
+			.eq('side', side)
+			.eq('status', 'pending');
+
+		if (count >= 3) {
+			alert('Maximum 3 bets per market side reached!');
+			return false;
+		}
+
+		return true;
+	}
+
+	async function checkParlayLimits() {
+		// Check how many active parlays user has
+		const { count } = await supabase
+			.from('parlay_bets')
+			.select('*', { count: 'exact', head: true })
+			.eq('user_id', user.id)
+			.eq('status', 'pending');
+
+		if (count >= 3) {
+			alert('Maximum 3 active parlays reached!');
+			return false;
+		}
+
+		return true;
+	}
+
 	function addToParlaySlip(event) {
 		const { marketId, side, marketTitle, sideLabel } = event.detail;
 		
@@ -160,7 +198,7 @@
 		<div class="header-content">
 			<div class="title-section">
 				<h1 class="sakura-title">SakuzaBets</h1>
-				<p>🌸 Community Sportsbook 🌸</p>
+				<p>🌸 Quitters never win and winners never quit 🌸</p>
 			</div>
 			<div class="auth-section">
 				<TwitchAuth />
@@ -185,7 +223,7 @@
 	{:else}
 		<main>
 			<div class="betting-modes">
-				<h2>Community Betting Hub</h2>
+				<h2>Ill break your kneecaps</h2>
 				<p>Place single bets in market pots, or combine picks for massive parlay payouts! 🌸</p>
 			</div>
 

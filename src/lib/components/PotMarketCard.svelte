@@ -3,7 +3,7 @@
 	import { getEstimatedSinglePayout } from '$lib/supabase.js';
 	
 	export let market;
-	export let userStake = 10;
+	export let userStake = null; // No default value
 
 	const dispatch = createEventDispatcher();
 
@@ -11,10 +11,15 @@
 	$: sideAPercentage = totalPot > 0 ? (market.side_a_total / totalPot) * 100 : 50;
 	$: sideBPercentage = totalPot > 0 ? (market.side_b_total / totalPot) * 100 : 50;
 
-	$: estimatedPayoutA = getEstimatedSinglePayout(userStake, 'side_a', market);
-	$: estimatedPayoutB = getEstimatedSinglePayout(userStake, 'side_b', market);
+	$: estimatedPayoutA = userStake ? getEstimatedSinglePayout(userStake, 'side_a', market) : 0;
+	$: estimatedPayoutB = userStake ? getEstimatedSinglePayout(userStake, 'side_b', market) : 0;
 
 	function placeBet(side) {
+		if (!userStake || userStake <= 0) {
+			alert('Please enter a stake amount!');
+			return;
+		}
+		
 		dispatch('placeBet', {
 			marketId: market.id,
 			side,
@@ -84,6 +89,7 @@
 				id="stake-{market.id}"
 				type="number" 
 				bind:value={userStake}
+				placeholder="Enter stake"
 				min="1"
 				step="1"
 			/>
