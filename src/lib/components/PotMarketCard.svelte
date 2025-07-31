@@ -23,6 +23,15 @@
 			sideLabel: side === 'side_a' ? market.side_a_label : market.side_b_label
 		});
 	}
+
+	function addToParlay(side) {
+		dispatch('addToParlay', {
+			marketId: market.id,
+			side,
+			marketTitle: market.title,
+			sideLabel: side === 'side_a' ? market.side_a_label : market.side_b_label
+		});
+	}
 </script>
 
 <div class="market-card">
@@ -68,15 +77,34 @@
 		</button>
 	</div>
 
-	<div class="stake-input">
-		<label for="stake-{market.id}">Your Stake:</label>
-		<input 
-			id="stake-{market.id}"
-			type="number" 
-			bind:value={userStake}
-			min="1"
-			step="1"
-		/>
+	<div class="betting-actions">
+		<div class="stake-input">
+			<label for="stake-{market.id}">Stake:</label>
+			<input 
+				id="stake-{market.id}"
+				type="number" 
+				bind:value={userStake}
+				min="1"
+				step="1"
+			/>
+		</div>
+		
+		<div class="parlay-actions">
+			<button 
+				class="add-to-parlay side-a"
+				on:click={() => addToParlay('side_a')}
+				disabled={market.status !== 'open'}
+			>
+				+ Parlay A
+			</button>
+			<button 
+				class="add-to-parlay side-b"
+				on:click={() => addToParlay('side_b')}
+				disabled={market.status !== 'open'}
+			>
+				+ Parlay B
+			</button>
+		</div>
 	</div>
 </div>
 
@@ -204,6 +232,14 @@
 		font-weight: bold;
 	}
 
+	.betting-actions {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--space-4);
+		flex-wrap: wrap;
+	}
+
 	.stake-input {
 		display: flex;
 		align-items: center;
@@ -213,6 +249,7 @@
 	.stake-input label {
 		color: var(--text-secondary);
 		font-size: 0.9rem;
+		white-space: nowrap;
 	}
 
 	.stake-input input {
@@ -222,5 +259,44 @@
 		padding: 0.5rem;
 		color: var(--text-primary);
 		width: 80px;
+	}
+
+	.parlay-actions {
+		display: flex;
+		gap: var(--space-2);
+	}
+
+	.add-to-parlay {
+		background: transparent;
+		border: 1px solid var(--sakura-pink);
+		color: var(--sakura-pink);
+		padding: 0.4rem 0.8rem;
+		border-radius: var(--border-radius);
+		font-size: 0.8rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.add-to-parlay:hover:not(:disabled) {
+		background: var(--sakura-pink);
+		color: white;
+		transform: translateY(-1px);
+	}
+
+	.add-to-parlay:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	@media (max-width: 768px) {
+		.betting-actions {
+			flex-direction: column;
+			align-items: stretch;
+			gap: var(--space-2);
+		}
+		
+		.parlay-actions {
+			justify-content: center;
+		}
 	}
 </style>

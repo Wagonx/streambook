@@ -1,7 +1,8 @@
 <script>
 	import { supabase } from '$lib/supabase.js';
-	import PotMarketCard from '$lib/components/PotMark.svelte';
+	import PotMarketCard from '$lib/components/PotMarketCard.svelte';
 	import TwitchAuth from '$lib/components/TwitchAuth.svelte';
+	import ParlaySlip from '$lib/components/ParlaySlip.svelte';
 	import { onMount } from 'svelte';
 
 	let events = [];
@@ -140,12 +141,17 @@
 		const existingIndex = selectedParlayBets.findIndex(bet => bet.marketId === marketId);
 		
 		if (existingIndex >= 0) {
-			// Update existing leg
+			// Update existing leg with new side selection
 			selectedParlayBets[existingIndex] = { marketId, side, marketTitle, sideLabel };
 		} else {
 			// Add new leg
 			selectedParlayBets = [...selectedParlayBets, { marketId, side, marketTitle, sideLabel }];
 		}
+	}
+
+	function handleParlayPlaced() {
+		// Reload user profile to get updated coin balance
+		loadUserProfile();
 	}
 </script>
 
@@ -179,8 +185,8 @@
 	{:else}
 		<main>
 			<div class="betting-modes">
-				<h2>Place Single Bets</h2>
-				<p>Bet against the community pot - higher risk, higher reward!</p>
+				<h2>Community Betting Hub</h2>
+				<p>Place single bets in market pots, or combine picks for massive parlay payouts! 🌸</p>
 			</div>
 
 			<div class="markets-section">
@@ -188,16 +194,17 @@
 					<PotMarketCard 
 						{market}
 						on:placeBet={handleSingleBet}
+						on:addToParlay={addToParlaySlip}
 					/>
 				{/each}
 			</div>
 
-			{#if selectedParlayBets.length > 0}
-				<div class="parlay-section">
-					<h3>Parlay Slip ({selectedParlayBets.length} legs)</h3>
-					<!-- We'll add parlay component next -->
-				</div>
-			{/if}
+			<ParlaySlip 
+				bind:selectedLegs={selectedParlayBets}
+				{user}
+				userCoins={userProfile?.coins || 0}
+				on:parlayPlaced={handleParlayPlaced}
+			/>
 		</main>
 	{/if}
 </div>
@@ -287,6 +294,7 @@
 		padding: var(--space-4);
 		background: linear-gradient(135deg, var(--bg-secondary) 0%, #1f2937 100%);
 		border-radius: var(--border-radius);
+		border: 1px solid var(--border-color);
 	}
 
 	.betting-modes h2 {
@@ -296,19 +304,7 @@
 
 	.betting-modes p {
 		color: var(--text-secondary);
-	}
-
-	.parlay-section {
-		margin-top: var(--space-6);
-		padding: var(--space-4);
-		background: var(--bg-secondary);
-		border-radius: var(--border-radius);
-		border: 1px solid var(--sakura-pink);
-	}
-
-	.parlay-section h3 {
-		color: var(--sakura-pink);
-		margin-bottom: var(--space-2);
+		font-size: 1.1rem;
 	}
 
 	@media (max-width: 768px) {
